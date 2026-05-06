@@ -1,0 +1,410 @@
+/* =====================================================
+   Final Cleaning Solutions Inc. — Dashboard Styles
+   ===================================================== */
+
+/* --- Reset & Base --- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --sidebar: #16213e;       /* dark navy sidebar background */
+  --sw: 300px;              /* sidebar width */
+  --green: #22c55e;         /* active / working */
+  --red: #ef4444;           /* inactive job */
+  --purple: #a855f7;        /* on leave / unavailable */
+  --blue: #3b82f6;          /* accent / focus */
+  --r: 12px;                /* default border radius */
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: #fff;
+}
+
+/* =====================================================
+   SIDEBAR
+   ===================================================== */
+
+#sidebar {
+  width: var(--sw);
+  background: var(--sidebar);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  border-right: 1px solid rgba(255, 255, 255, .07);
+}
+
+/* Company logo / header */
+#slogo {
+  padding: 18px 16px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, .07);
+}
+#slogo .co {
+  font-size: 10px;
+  font-weight: 600;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+#slogo .ti {
+  font-size: 13px;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin-top: 3px;
+  line-height: 1.3;
+}
+
+/* Tab buttons (Jobs / Employees) */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid rgba(255, 255, 255, .07);
+}
+.tbtn {
+  flex: 1;
+  padding: 11px 8px;
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  position: relative;
+  transition: color .15s;
+}
+.tbtn.on { color: #f1f5f9; }
+/* Blue underline indicator for active tab */
+.tbtn.on::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 12px;
+  right: 12px;
+  height: 2px;
+  background: var(--blue);
+  border-radius: 2px 2px 0 0;
+}
+
+/* Tab pane (hidden by default, shown with .on) */
+.tpane {
+  display: none;
+  flex: 1;
+  overflow-y: auto;
+  flex-direction: column;
+  padding: 12px;
+  gap: 8px;
+}
+.tpane.on { display: flex; }
+
+/* Search input */
+.srch {
+  width: 100%;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, .07);
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 8px;
+  color: #f1f5f9;
+  font-size: 13px;
+  outline: none;
+}
+.srch::placeholder { color: #475569; }
+.srch:focus { border-color: rgba(59, 130, 246, .5); }
+
+/* "New Job / New Employee" dashed create button */
+.cbtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px;
+  border-radius: 8px;
+  border: 1.5px dashed rgba(255, 255, 255, .15);
+  background: none;
+  color: #64748b;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+.cbtn:hover { border-color: var(--blue); color: #93c5fd; }
+
+/* Sidebar card (shared by jobs and employees) */
+.sc {
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+  flex-shrink: 0;
+  border-left: 3px solid transparent;
+  background: rgba(255, 255, 255, .05);
+}
+.sc:hover {
+  background: rgba(255, 255, 255, .09);
+  transform: translateX(2px);
+}
+
+/* Job card border colors */
+.sc.ja { border-left-color: var(--green); }   /* job active */
+.sc.ji { border-left-color: var(--red); }     /* job inactive */
+
+/* Employee card border colors */
+.sc.ea { border-left-color: var(--green); }   /* employee active (assigned) */
+.sc.en { border-left-color: rgba(255, 255, 255, .15); } /* neutral (available, unassigned) */
+.sc.eu { border-left-color: var(--purple); }  /* unavailable / on leave */
+
+/* Card text */
+.sn { font-size: 13px; font-weight: 600; color: #f1f5f9; }
+.ss { font-size: 11px; color: #64748b; margin-top: 2px; }
+
+/* Employee level colors */
+.lv-fm  { color: #f97316; font-weight: 600; } /* Foreman — orange */
+.lv-jm  { color: #38bdf8; font-weight: 600; } /* Journeyman — bright blue */
+.lv-app { color: #facc15; font-weight: 600; } /* Apprentice — yellow */
+
+/* Status badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  margin-top: 4px;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+.bg { background: rgba(34, 197, 94, .15); color: var(--green); }   /* green */
+.br { background: rgba(239, 68, 68, .15); color: var(--red); }     /* red */
+.bp { background: rgba(168, 85, 247, .15); color: var(--purple); } /* purple */
+.bx { background: rgba(255, 255, 255, .07); color: #64748b; }      /* gray / neutral */
+
+/* =====================================================
+   WHITEBOARD
+   ===================================================== */
+
+#wb {
+  flex: 1;
+  position: relative;
+  background: #fff;
+  overflow: hidden;
+  /* Subtle grid to give the whiteboard feel */
+  background-image:
+    linear-gradient(rgba(148, 163, 184, .13) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, .13) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+
+/* Whiteboard header bar */
+#wbhdr {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  padding: 14px 22px;
+  z-index: 5;
+  /* Fade out so cards can scroll under it */
+  background: linear-gradient(to bottom, rgba(255, 255, 255, .96) 65%, transparent);
+  pointer-events: none;
+}
+#wbhdr h2 { font-size: 17px; font-weight: 700; color: #1e293b; }
+#wbhdr p  { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+
+/* SVG overlay for connecting lines — sits above bg, below cards */
+#svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Card container — fills the whiteboard */
+#wbc { position: absolute; inset: 0; }
+
+/* --- Whiteboard: Job Cards --- */
+.wj {
+  position: absolute;
+  background: #fff;
+  border: 2px solid #1e293b;
+  border-radius: var(--r);
+  padding: 13px 16px;
+  min-width: 170px;
+  max-width: 210px;
+  cursor: grab;
+  z-index: 2;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, .1);
+  user-select: none;
+  transition: box-shadow .15s;
+}
+.wj:hover { box-shadow: 0 8px 28px rgba(0, 0, 0, .14); }
+.wj.gjd  { cursor: grabbing; box-shadow: 0 16px 36px rgba(0, 0, 0, .18); z-index: 10; } /* while dragging */
+.wj.gdt  { background: #f0fdf4; border-color: var(--green); box-shadow: 0 0 0 3px rgba(34, 197, 94, .2); } /* drop target highlight */
+
+.wjn { font-size: 13px; font-weight: 700; color: #1e293b; }
+.wjc { font-size: 11px; color: #64748b; margin-top: 3px; }
+
+/* --- Whiteboard: Employee Cards --- */
+.we {
+  position: absolute;
+  background: #fff;
+  border: 1.5px solid var(--green);
+  border-radius: 10px;
+  padding: 7px 11px;
+  min-width: 118px;
+  z-index: 2;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .07);
+  pointer-events: none; /* display only — edit via sidebar */
+}
+.we.wlv { border-color: var(--purple); } /* on leave / unavailable gets purple border */
+
+.wen { font-size: 12px; font-weight: 600; color: #1e293b; }
+.wel { font-size: 10px; color: #64748b; margin-top: 1px; }
+
+/* =====================================================
+   DROP HINT TOAST
+   ===================================================== */
+#dhint {
+  position: fixed;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(30, 41, 59, .85);
+  backdrop-filter: blur(8px);
+  color: #f1f5f9;
+  padding: 7px 18px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  display: none;
+  z-index: 50;
+  pointer-events: none;
+}
+
+/* =====================================================
+   OVERLAY & EDIT PANELS
+   ===================================================== */
+
+/* Dim overlay behind open panels */
+#ov {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .2);
+  z-index: 199;
+  display: none;
+}
+#ov.on { display: block; }
+
+/* Slide-in edit panel (job or employee) */
+.ep {
+  position: fixed;
+  top: 0;
+  right: -400px; /* hidden off screen by default */
+  width: 375px;
+  height: 100vh;
+  background: #fff;
+  box-shadow: -4px 0 32px rgba(0, 0, 0, .15);
+  z-index: 200;
+  padding: 26px 22px;
+  overflow-y: auto;
+  transition: right .25s cubic-bezier(.4, 0, .2, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.ep.on { right: 0; } /* slide in */
+
+/* Panel header row */
+.eph { display: flex; align-items: center; justify-content: space-between; }
+.ept { font-size: 17px; font-weight: 700; color: #1e293b; }
+
+/* Close (×) button */
+.epc {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  border: none;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 17px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.epc:hover { background: #e2e8f0; color: #1e293b; }
+
+/* Form field wrapper */
+.ff { display: flex; flex-direction: column; gap: 4px; }
+.fl {
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+
+/* Form inputs and selects */
+.fi, .fs {
+  padding: 10px 12px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #1e293b;
+  background: #fff;
+  outline: none;
+  transition: border-color .15s;
+  width: 100%;
+}
+.fi:focus, .fs:focus { border-color: var(--blue); }
+
+/* Action button row */
+.ea2 { display: flex; gap: 8px; margin-top: 6px; }
+
+.btn {
+  padding: 11px 15px;
+  border-radius: 8px;
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+}
+.bp2 { background: #1e293b; color: #fff; flex: 1; }
+.bp2:hover { background: #0f172a; }
+.bs  { background: #f1f5f9; color: #475569; }
+.bs:hover  { background: #e2e8f0; }
+.bd  { background: #fee2e2; color: #dc2626; }
+.bd:hover  { background: #fecaca; }
+
+/* Current assignment display row */
+.ainfo {
+  padding: 9px 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  font-size: 13px;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+/* Unassign ghost button inside assignment row */
+.ug {
+  background: none;
+  border: 1.5px solid #e2e8f0;
+  color: #64748b;
+  font-size: 11px;
+  padding: 5px 9px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.ug:hover { border-color: #94a3b8; color: #475569; }
+
+/* =====================================================
+   SCROLLBAR (sidebar)
+   ===================================================== */
+::-webkit-scrollbar       { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, .1); border-radius: 2px; }

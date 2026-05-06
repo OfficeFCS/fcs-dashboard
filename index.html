@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Final Cleaning Solutions Inc. — Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ================================================
+       SIDEBAR
+       Left panel with Jobs and Employees tabs.
+       All editing happens here — not on the whiteboard.
+       ================================================ -->
+  <div id="sidebar">
+
+    <!-- Company header -->
+    <div id="slogo">
+      <div class="co">Employee Dashboard</div>
+      <div class="ti">Final Cleaning Solutions Inc.</div>
+    </div>
+
+    <!-- Tab toggle buttons -->
+    <div class="tabs">
+      <button class="tbtn on" id="tb-jobs"      onclick="switchTab('jobs')">Jobs</button>
+      <button class="tbtn"    id="tb-employees" onclick="switchTab('employees')">Employees</button>
+    </div>
+
+    <!-- Jobs tab -->
+    <div class="tpane on" id="tp-jobs">
+      <input class="srch" id="srch-j" type="text" placeholder="Search jobs..." oninput="renderJobs()">
+      <button class="cbtn" onclick="openCreateJob()">+ New Job</button>
+      <div id="jlist" style="display:flex;flex-direction:column;gap:6px"></div>
+    </div>
+
+    <!-- Employees tab -->
+    <div class="tpane" id="tp-employees">
+      <input class="srch" id="srch-e" type="text" placeholder="Search employees..." oninput="renderEmps()">
+      <button class="cbtn" onclick="openCreateEmp()">+ New Employee</button>
+      <div id="elist" style="display:flex;flex-direction:column;gap:6px"></div>
+    </div>
+
+  </div><!-- /sidebar -->
+
+
+  <!-- ================================================
+       WHITEBOARD
+       Main canvas showing active jobs and their
+       assigned employees connected by lines.
+       Drag employees from the sidebar to assign them.
+       ================================================ -->
+  <div id="wb">
+    <div id="wbhdr">
+      <h2>Active Jobs Board</h2>
+      <p>Drag employees from the side panel onto job cards to assign them</p>
+    </div>
+
+    <!-- SVG layer for dashed connecting lines (below cards) -->
+    <svg id="svg"></svg>
+
+    <!-- Absolutely-positioned job and employee cards -->
+    <div id="wbc"></div>
+  </div><!-- /wb -->
+
+
+  <!-- Toast shown while dragging an employee -->
+  <div id="dhint">Drop on a job card to assign</div>
+
+  <!-- Dim overlay behind open edit panels -->
+  <div id="ov" onclick="closePanel()"></div>
+
+
+  <!-- ================================================
+       JOB EDIT PANEL
+       Slides in from the right when editing a job.
+       ================================================ -->
+  <div class="ep" id="ep-job">
+    <div class="eph">
+      <div class="ept" id="ep-job-t">New Job</div>
+      <button class="epc" onclick="closePanel()">×</button>
+    </div>
+
+    <div class="ff">
+      <label class="fl">Job Name *</label>
+      <input class="fi" id="fj-name" type="text" placeholder="e.g. Downtown Office">
+    </div>
+    <div class="ff">
+      <label class="fl">Contractor</label>
+      <input class="fi" id="fj-con" type="text" placeholder="Contractor name">
+    </div>
+    <div class="ff">
+      <label class="fl">Phone</label>
+      <input class="fi" id="fj-ph" type="tel" placeholder="555-0100">
+    </div>
+    <div class="ff">
+      <label class="fl">Email</label>
+      <input class="fi" id="fj-em" type="email" placeholder="contractor@email.com">
+    </div>
+    <div class="ff">
+      <label class="fl">Address</label>
+      <input class="fi" id="fj-ad" type="text" placeholder="123 Main St">
+    </div>
+    <div class="ff">
+      <label class="fl">Status</label>
+      <select class="fs" id="fj-st">
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+    </div>
+
+    <div class="ea2">
+      <button class="btn bs"  onclick="closePanel()">Cancel</button>
+      <button class="btn bp2" onclick="saveJob()">Save</button>
+      <button class="btn bd"  id="del-job" onclick="confirmDelJob()" style="display:none">Delete</button>
+    </div>
+  </div><!-- /ep-job -->
+
+
+  <!-- ================================================
+       EMPLOYEE EDIT PANEL
+       Slides in from the right when editing an employee.
+       ================================================ -->
+  <div class="ep" id="ep-emp">
+    <div class="eph">
+      <div class="ept" id="ep-emp-t">New Employee</div>
+      <button class="epc" onclick="closePanel()">×</button>
+    </div>
+
+    <div class="ff">
+      <label class="fl">Name *</label>
+      <input class="fi" id="fe-name" type="text" placeholder="Full name">
+    </div>
+    <div class="ff">
+      <label class="fl">Phone</label>
+      <input class="fi" id="fe-ph" type="tel" placeholder="555-0100">
+    </div>
+    <div class="ff">
+      <label class="fl">Level</label>
+      <select class="fs" id="fe-lv" onchange="onLvChange()">
+        <option value="foreman">Foreman</option>
+        <option value="journeyman">Journeyman</option>
+        <option value="apprentice">Apprentice</option>
+      </select>
+    </div>
+
+    <!-- Only shown when Apprentice is selected -->
+    <div class="ff" id="fe-alw" style="display:none">
+      <label class="fl">Apprentice Level</label>
+      <select class="fs" id="fe-al">
+        <option value="1">Level 1</option>
+        <option value="2">Level 2</option>
+        <option value="3">Level 3</option>
+        <option value="4">Level 4</option>
+        <option value="5">Level 5</option>
+        <option value="6">Level 6</option>
+      </select>
+    </div>
+
+    <div class="ff">
+      <label class="fl">Availability</label>
+      <select class="fs" id="fe-av">
+        <option value="available">Available</option>
+        <option value="leave">On Leave</option>
+        <option value="unavailable">Cannot Work</option>
+      </select>
+    </div>
+
+    <!-- Only shown when the employee is assigned to a job -->
+    <div class="ff" id="fe-asgw" style="display:none">
+      <label class="fl">Current Assignment</label>
+      <div class="ainfo">
+        <span id="fe-asgn">—</span>
+        <button class="ug" onclick="unassign()">Unassign</button>
+      </div>
+    </div>
+
+    <div class="ea2">
+      <button class="btn bs"  onclick="closePanel()">Cancel</button>
+      <button class="btn bp2" onclick="saveEmp()">Save</button>
+      <button class="btn bd"  id="del-emp" onclick="confirmDelEmp()" style="display:none">Delete</button>
+    </div>
+  </div><!-- /ep-emp -->
+
+
+  <script src="app.js"></script>
+</body>
+</html>
