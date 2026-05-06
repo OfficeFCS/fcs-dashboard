@@ -24,24 +24,36 @@ let selectedEmp = null;  // id of employee selected for tap-to-assign (mobile)
 
 const $      = id => document.getElementById(id);
 const uid    = () => '_' + Math.random().toString(36).slice(2, 10);
-const save   = () => { try { localStorage.setItem('fcs4', JSON.stringify(db)); } catch (e) {} };
 const jobBy  = id => db.jobs.find(j => j.id === id);
 const empBy  = id => db.employees.find(e => e.id === id);
+
+// Save the full state to the server (fire-and-forget — UI updates immediately)
+const save = () => {
+  fetch('/api/state', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(db),
+  }).catch(err => console.error('Save failed:', err));
+};
 
 // Escape HTML to prevent XSS when injecting user data into innerHTML
 const esc = s =>
   s ? (s + '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : '';
 
 // =====================================================
-//  DATA LOAD — seeds demo data on first launch
-//  Key bumped to 'fcs4' to force re-seed with full data
+//  DATA LOAD — fetches state from the server.
+//  Seeds demo data if the server has no saved state yet.
 // =====================================================
-function load() {
+async function load() {
   try {
-    const s = localStorage.getItem('fcs4');
-    if (s) { db = JSON.parse(s); return; }
-  } catch (e) {}
+    const res  = await fetch('/api/state');
+    const data = await res.json();
+    if (data) { db = data; return; }
+  } catch (e) {
+    console.error('Could not reach server, using empty state:', e);
+  }
 
+  // No saved state — seed with demo data and save it to the server
   // --- 2 active jobs ---
   const activeJobs = [
     { id: 'j1', name: 'Downtown Office Complex', con: 'BuildCo Inc',     ph: '555-0101', em: 'build@buildco.com',  ad: '123 Main St',  active: true },
@@ -732,5 +744,5 @@ function renderAll() {
 window.addEventListener('resize', () => drawLines(db.jobs.filter(j => j.active)));
 $('wb').addEventListener('scroll',  () => drawLines(db.jobs.filter(j => j.active)));
 
-load();
-renderAll();
+// Load from server first, then render
+load().then(() => renderAll());
