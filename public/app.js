@@ -807,4 +807,4 @@ load().then(() => renderAll());
 setInterval(async () => {
   await load();
   renderAll();
-}, 10 * 60 * 1000);
+}, 5 * 60 * 1000);
