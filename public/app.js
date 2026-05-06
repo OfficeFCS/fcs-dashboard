@@ -55,14 +55,9 @@ async function load() {
     const res  = await fetch('/api/state', {
       headers: { 'Authorization': 'Bearer ' + authToken },
     });
-    if (res.status === 401) { showLogin(); return; }
+    if (res.status === 401) { window.location.replace('/login.html'); return; }
     const data = await res.json();
-    if (data) {
-      db = data;
-      $('login-screen').classList.add('hidden');
-      return;
-    }
-    $('login-screen').classList.add('hidden');
+    if (data) { db = data; return; }
   } catch (e) {
     console.error('Could not reach server, using empty state:', e);
   }
@@ -841,41 +836,8 @@ function renderAll() {
 // Re-zoom and redraw whenever the window is resized
 window.addEventListener('resize', () => zoomToFit());
 
-// =====================================================
-//  LOGIN
-// =====================================================
-function showLogin() {
-  $('login-screen').classList.remove('hidden');
-  $('login-pw').value = '';
-  $('login-err').textContent = '';
-  setTimeout(() => $('login-pw').focus(), 100);
-}
-
-async function doLogin() {
-  const pw  = $('login-pw').value;
-  const err = $('login-err');
-  if (!pw) { err.textContent = 'Please enter the password.'; return; }
-
-  try {
-    const res  = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: pw }),
-    });
-    const data = await res.json();
-    if (!res.ok) { err.textContent = 'Incorrect password. Try again.'; return; }
-    authToken = data.token;
-    localStorage.setItem('fcs-token', authToken);
-    $('login-screen').classList.add('hidden');
-    await load();
-    renderAll();
-  } catch (e) {
-    err.textContent = 'Could not connect. Try again.';
-  }
-}
-
 // Load from server first, then render
-// If token is missing or invalid, load() will show the login screen instead
+// If token is missing or invalid, load() redirects to login.html
 load().then(() => renderAll());
 
 // Re-fetch data from the server every 10 minutes so the board stays current
