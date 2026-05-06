@@ -215,6 +215,21 @@ function lvClass(e) {
   return 'lv-app';
 }
 
+// Format a date string (YYYY-MM-DD) as "May 6"
+function fmtDate(d) {
+  if (!d) return '';
+  const [y, m, day] = d.split('-');
+  return new Date(+y, +m - 1, +day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+// Format a time string (HH:MM) as "8:00 AM"
+function fmtTime(t) {
+  if (!t) return '';
+  const [h, min] = t.split(':');
+  const dt = new Date(); dt.setHours(+h, +min);
+  return dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
+
 // Sort weight: Foreman < Journeyman < Apprentice 1-6
 function lvSort(e) {
   if (e.lv === 'foreman')    return 0;
@@ -320,7 +335,7 @@ function renderEmps() {
 function openCreateJob() {
   ejId = null;
   $('ep-job-t').textContent = 'New Job';
-  ['fj-name', 'fj-con', 'fj-ph', 'fj-em', 'fj-ad'].forEach(id => $(id).value = '');
+  ['fj-name', 'fj-con', 'fj-ph', 'fj-em', 'fj-ad', 'fj-sd', 'fj-ed', 'fj-tm'].forEach(id => $(id).value = '');
   $('fj-st').value = 'active';
   $('del-job').style.display = 'none';
   openPanel('ep-job');
@@ -336,6 +351,9 @@ function openEditJob(id) {
   $('fj-ph').value   = j.ph   || '';
   $('fj-em').value   = j.em   || '';
   $('fj-ad').value   = j.ad   || '';
+  $('fj-sd').value   = j.sd || '';
+  $('fj-ed').value   = j.ed || '';
+  $('fj-tm').value   = j.tm || '';
   $('fj-st').value   = j.active ? 'active' : 'inactive';
   $('del-job').style.display = '';
   openPanel('ep-job');
@@ -355,6 +373,9 @@ function saveJob() {
       ph:  $('fj-ph').value.trim(),
       em:  $('fj-em').value.trim(),
       ad:  $('fj-ad').value.trim(),
+      sd:  $('fj-sd').value,
+      ed:  $('fj-ed').value,
+      tm:  $('fj-tm').value,
     });
     // Deactivating a job removes it from the whiteboard and unassigns all employees
     if (wasActive && !active) {
@@ -371,6 +392,9 @@ function saveJob() {
       ph:  $('fj-ph').value.trim(),
       em:  $('fj-em').value.trim(),
       ad:  $('fj-ad').value.trim(),
+      sd:  $('fj-sd').value,
+      ed:  $('fj-ed').value,
+      tm:  $('fj-tm').value,
     });
     if (active) autoPlace(id);
   }
@@ -563,9 +587,14 @@ function renderWB() {
     jel.className = 'wj';
     jel.id = 'wbj-' + job.id;
     jel.style.cssText = `left:${x}px;top:${y}px`;
+    const dateStr = (job.sd || job.ed)
+      ? [fmtDate(job.sd), fmtDate(job.ed)].filter(Boolean).join(' – ')
+      : '';
+    const metaLine = [dateStr, fmtTime(job.tm)].filter(Boolean).join('  ·  ');
     jel.innerHTML =
       `<div class="wjn">${esc(job.name)}</div>` +
-      (job.con ? `<div class="wjc">${esc(job.con)}</div>` : '');
+      (job.con ? `<div class="wjc">${esc(job.con)}</div>` : '') +
+      (metaLine ? `<div class="wjd">${esc(metaLine)}</div>` : '');
 
     // Click: if an employee is selected for tap-to-assign, assign them to this job
     jel.addEventListener('click', () => {
