@@ -43,29 +43,43 @@
 
   </div><!-- /sidebar -->
 
+  <!-- Dims the whiteboard when the sidebar is open on mobile -->
+  <div id="sb-ov" onclick="closeSidebar()"></div>
+
 
   <!-- ================================================
        WHITEBOARD
        Main canvas showing active jobs and their
        assigned employees connected by lines.
-       Drag employees from the sidebar to assign them.
+       Desktop: drag employees from sidebar onto job cards.
+       Mobile: tap "+ Assign" on an employee, then tap a job.
        ================================================ -->
   <div id="wb">
     <div id="wbhdr">
-      <h2>Active Jobs Board</h2>
-      <p>Drag employees from the side panel onto job cards to assign them</p>
+      <!-- Hamburger button — only visible on mobile -->
+      <button id="menu-btn" onclick="toggleSidebar()">☰</button>
+      <div id="wbhdr-text">
+        <h2>Active Jobs Board</h2>
+        <p>Drag employees onto job cards to assign them</p>
+      </div>
     </div>
 
-    <!-- SVG layer for dashed connecting lines (below cards) -->
-    <svg id="svg"></svg>
+    <!-- Large inner canvas — makes the board scrollable/pannable -->
+    <div id="wb-inner">
+      <!-- SVG layer for dashed connecting lines (below cards) -->
+      <svg id="svg"></svg>
 
-    <!-- Absolutely-positioned job and employee cards -->
-    <div id="wbc"></div>
+      <!-- Absolutely-positioned job and employee cards -->
+      <div id="wbc"></div>
+    </div>
   </div><!-- /wb -->
 
 
-  <!-- Toast shown while dragging an employee -->
+  <!-- Toast shown while dragging an employee (desktop) -->
   <div id="dhint">Drop on a job card to assign</div>
+
+  <!-- Banner shown when an employee is selected for tap-to-assign (mobile) -->
+  <div id="assign-hint"></div>
 
   <!-- Dim overlay behind open edit panels -->
   <div id="ov" onclick="closePanel()"></div>

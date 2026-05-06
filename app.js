@@ -12,10 +12,11 @@
 // =====================================================
 let db = { jobs: [], employees: [], pos: {} };
 
-let ejId    = null;  // id of the job currently open in the edit panel
-let eeId    = null;  // id of the employee currently open in the edit panel
-let dragEmp = null;  // id of the employee being dragged from the sidebar
-let wbDrag  = null;  // active whiteboard job-drag state { id, el, sx, sy, ox, oy }
+let ejId        = null;  // id of the job currently open in the edit panel
+let eeId        = null;  // id of the employee currently open in the edit panel
+let dragEmp     = null;  // id of the employee being dragged from the sidebar (desktop)
+let wbDrag      = null;  // active whiteboard job-drag state { id, el, sx, sy, ox, oy }
+let selectedEmp = null;  // id of employee selected for tap-to-assign (mobile)
 
 // =====================================================
 //  UTILITIES
@@ -284,12 +285,17 @@ function renderEmps() {
     // Only available employees can be dragged to the whiteboard
     const canDrag = e.av === 'available';
 
-    return `<div class="sc ${cls}"
+    const assignBtn = canDrag
+      ? `<button class="assign-btn" onclick="event.stopPropagation();selectEmpToAssign('${e.id}')">+ Assign</button>`
+      : '';
+
+    return `<div class="sc ${cls} ${selectedEmp === e.id ? 'sel' : ''}"
       ${canDrag ? `draggable="true" ondragstart="dStart(event,'${e.id}')" ondragend="dEnd(event)"` : ''}
       onclick="openEditEmp('${e.id}')">
       <div class="sn">${esc(e.name)}</div>
       <div class="ss"><span class="${lvClass(e)}">${lvFull(e)}</span></div>
       ${badge}
+      ${assignBtn}
     </div>`;
   }).join('');
 }
@@ -495,6 +501,35 @@ function dEnd(e) {
   document.querySelectorAll('.wj.gdt').forEach(el => el.classList.remove('gdt'));
 }
 
+// Tap-to-assign: select an employee then tap a job card to assign (works on mobile and desktop)
+function selectEmpToAssign(empId) {
+  selectedEmp = empId;
+  const e = empBy(empId);
+  const hint = $('assign-hint');
+  hint.innerHTML = `Tap a job to assign <strong>${esc(e?.name)}</strong> <button onclick="cancelAssign()">✕ Cancel</button>`;
+  hint.style.display = 'block';
+  renderEmps(); // re-render to show selected highlight
+}
+
+function cancelAssign() {
+  selectedEmp = null;
+  $('assign-hint').style.display = 'none';
+  renderEmps();
+}
+
+// =====================================================
+//  SIDEBAR TOGGLE (mobile)
+// =====================================================
+function toggleSidebar() {
+  $('sidebar').classList.toggle('open');
+  $('sb-ov').classList.toggle('on');
+}
+
+function closeSidebar() {
+  $('sidebar').classList.remove('open');
+  $('sb-ov').classList.remove('on');
+}
+
 // =====================================================
 //  WHITEBOARD RENDER
 // =====================================================
@@ -519,13 +554,31 @@ function renderWB() {
       `<div class="wjn">${esc(job.name)}</div>` +
       (job.con ? `<div class="wjc">${esc(job.con)}</div>` : '');
 
-    // Mousedown starts a whiteboard drag to reposition the job card
+    // Click: if an employee is selected for tap-to-assign, assign them to this job
+    jel.addEventListener('click', () => {
+      if (!selectedEmp) return;
+      const emp = empBy(selectedEmp);
+      if (emp && emp.av === 'available') {
+        emp.jid = job.id;
+        save(); cancelAssign(); renderAll();
+      }
+    });
+
+    // Mousedown starts a whiteboard drag to reposition the job card (desktop)
     jel.addEventListener('mousedown', e => {
-      if (e.button !== 0) return;
+      if (e.button !== 0 || selectedEmp) return; // don't drag while in assign mode
       wbDrag = { id: job.id, el: jel, sx: e.clientX, sy: e.clientY, ox: x, oy: y };
       jel.classList.add('gjd');
       e.preventDefault();
     });
+
+    // Touchstart starts a whiteboard drag to reposition the job card (mobile)
+    jel.addEventListener('touchstart', e => {
+      if (selectedEmp) return; // tap handled by click event above
+      const t = e.touches[0];
+      wbDrag = { id: job.id, el: jel, sx: t.clientX, sy: t.clientY, ox: x, oy: y };
+      jel.classList.add('gjd');
+    }, { passive: true });
 
     // Dragover / drop: accept employee cards dragged from the sidebar
     jel.addEventListener('dragover', e => {
@@ -573,7 +626,7 @@ function renderWB() {
 function drawLines(active) {
   const svg = $('svg');
   svg.innerHTML = '';
-  const wr = $('wb').getBoundingClientRect();
+  const wr = $('wb-inner').getBoundingClientRect(); // use inner canvas so scroll offset is accounted for
 
   active.forEach(job => {
     const jel = $('wbj-' + job.id);
@@ -587,7 +640,7 @@ function drawLines(active) {
       if (!eel) return;
       const er = eel.getBoundingClientRect();
       const ex = er.left - wr.left;
-      const ey = er.top  - wr.top + er.height / 2;
+          const ey = er.top  - wr.top + er.height / 2;
 
       const ln = document.createElementNS('http://www.w3.org/2000/svg', 'line');
       ln.setAttribute('x1', jx);
@@ -637,6 +690,35 @@ document.addEventListener('mouseup', () => {
   }
 });
 
+// Touch equivalents for job card repositioning on mobile
+document.addEventListener('touchmove', e => {
+  if (!wbDrag) return;
+  e.preventDefault(); // prevent page scroll while dragging a card
+  const t = e.touches[0];
+  const { id, el, sx, sy, ox, oy } = wbDrag;
+  const nx = Math.max(0,  ox + t.clientX - sx);
+  const ny = Math.max(0,  oy + t.clientY - sy);
+  el.style.left = nx + 'px';
+  el.style.top  = ny + 'px';
+  db.pos[id] = { x: nx, y: ny };
+  db.employees.filter(x => x.jid === id).forEach((emp, i) => {
+    const eel = $('wbe-' + emp.id);
+    if (eel) {
+      eel.style.left = (nx + 190) + 'px';
+      eel.style.top  = (ny + i * 62) + 'px';
+    }
+  });
+  drawLines(db.jobs.filter(j => j.active));
+}, { passive: false });
+
+document.addEventListener('touchend', () => {
+  if (wbDrag) {
+    wbDrag.el.classList.remove('gjd');
+    save();
+    wbDrag = null;
+  }
+});
+
 // =====================================================
 //  RENDER ALL + INIT
 // =====================================================
@@ -646,8 +728,9 @@ function renderAll() {
   renderWB();
 }
 
-// Redraw lines if the window is resized (positions shift)
+// Redraw lines on resize or scroll (positions shift relative to viewport)
 window.addEventListener('resize', () => drawLines(db.jobs.filter(j => j.active)));
+$('wb').addEventListener('scroll',  () => drawLines(db.jobs.filter(j => j.active)));
 
 load();
 renderAll();
