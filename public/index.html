@@ -64,11 +64,11 @@
       </div>
     </div>
 
-    <!-- Large inner canvas — makes the board scrollable/pannable -->
-    <div id="wb-inner">
-      <!-- SVG layer for dashed connecting lines (below cards) -->
-      <svg id="svg"></svg>
+    <!-- SVG layer for connecting lines — outside wb-inner so it is not zoom-transformed -->
+    <svg id="svg"></svg>
 
+    <!-- Inner canvas — gets CSS scale transform applied by zoomToFit() -->
+    <div id="wb-inner">
       <!-- Absolutely-positioned job and employee cards -->
       <div id="wbc"></div>
     </div>

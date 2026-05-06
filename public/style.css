@@ -190,7 +190,7 @@ body {
   flex: 1;
   position: relative;
   background: #fff;
-  overflow: auto; /* scrollable so users can pan around the whiteboard */
+  overflow: hidden; /* zoom-to-fit scales content to visible area — no scroll needed */
   /* Subtle grid to give the whiteboard feel */
   background-image:
     linear-gradient(rgba(148, 163, 184, .13) 1px, transparent 1px),
@@ -198,10 +198,9 @@ body {
   background-size: 36px 36px;
 }
 
-/* Whiteboard header bar — sticky so it stays visible while scrolling */
+/* Whiteboard header bar */
 #wbhdr {
-  position: sticky;
-  top: 0; left: 0; right: 0;
+  position: relative;
   padding: 12px 16px;
   z-index: 5;
   background: rgba(255, 255, 255, .97);
@@ -227,11 +226,14 @@ body {
 /* Card container — fills the whiteboard */
 #wbc { position: absolute; inset: 0; }
 
-/* Inner canvas — larger than the viewport so the board is scrollable/pannable */
+/* Inner canvas — zoomToFit() applies a CSS transform here to scale all active jobs into view */
 #wb-inner {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 2500px;
   height: 1800px;
+  transform-origin: 0 0;
 }
 
 /* --- Whiteboard: Job Cards --- */

@@ -16,7 +16,8 @@ let ejId        = null;  // id of the job currently open in the edit panel
 let eeId        = null;  // id of the employee currently open in the edit panel
 let dragEmp     = null;  // id of the employee being dragged from the sidebar (desktop)
 let wbDrag      = null;  // active whiteboard job-drag state { id, el, sx, sy, ox, oy }
-let selectedEmp = null;  // id of employee selected for tap-to-assign (mobile)
+let currentScale = 1;   // current whiteboard zoom level (maintained by zoomToFit)
+let selectedEmp  = null;  // id of employee selected for tap-to-assign (mobile)
 
 // =====================================================
 //  UTILITIES
@@ -626,8 +627,8 @@ function renderWB() {
     });
   });
 
-  // Draw connecting lines after the DOM is painted
-  requestAnimationFrame(() => drawLines(active));
+  // Scale and center all active cards, then draw connecting lines
+  requestAnimationFrame(() => zoomToFit());
 }
 
 // =====================================================
@@ -638,7 +639,7 @@ function renderWB() {
 function drawLines(active) {
   const svg = $('svg');
   svg.innerHTML = '';
-  const wr = $('wb-inner').getBoundingClientRect(); // use inner canvas so scroll offset is accounted for
+  const wr = $('wb').getBoundingClientRect();
 
   active.forEach(job => {
     const jel = $('wbj-' + job.id);
@@ -668,6 +669,61 @@ function drawLines(active) {
 }
 
 // =====================================================
+//  ZOOM TO FIT
+//  Scales and centers #wb-inner so all active job cards
+//  and their assigned employees are fully visible.
+//  Called after every render and on window resize.
+// =====================================================
+function zoomToFit() {
+  const active = db.jobs.filter(j => j.active);
+  const wbEl   = $('wb');
+  const hdrEl  = $('wbhdr');
+  const inner  = $('wb-inner');
+
+  const wbW  = wbEl.offsetWidth;
+  const hdrH = hdrEl.offsetHeight;
+  const wbH  = wbEl.offsetHeight - hdrH;
+
+  if (!active.length) {
+    currentScale = 1;
+    inner.style.transformOrigin = '0 0';
+    inner.style.transform = `translate(0px, ${hdrH}px) scale(1)`;
+    requestAnimationFrame(() => drawLines(active));
+    return;
+  }
+
+  // Bounding box of all active job + employee cards
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  active.forEach(job => {
+    const pos = db.pos[job.id];
+    if (!pos) return;
+    const { x, y } = pos;
+    const emps = db.employees.filter(e => e.jid === job.id);
+    minX = Math.min(minX, x);
+    minY = Math.min(minY, y);
+    maxX = Math.max(maxX, x + (emps.length ? 190 + 140 : 210));
+    maxY = Math.max(maxY, y + Math.max(60, emps.length * 62));
+  });
+
+  const pad = 32;
+  const contentW = maxX - minX + pad * 2;
+  const contentH = maxY - minY + pad * 2;
+
+  // Never zoom in past 100%
+  const s = Math.min(wbW / contentW, wbH / contentH, 1);
+  currentScale = s;
+
+  // Center the scaled content in the area below the header
+  const tx = (wbW - contentW * s) / 2 - (minX - pad) * s;
+  const ty = hdrH + (wbH - contentH * s) / 2 - (minY - pad) * s;
+
+  inner.style.transformOrigin = '0 0';
+  inner.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;
+
+  requestAnimationFrame(() => drawLines(active));
+}
+
+// =====================================================
 //  GLOBAL WHITEBOARD DRAG (job card repositioning)
 //  Listening on document so dragging outside the card
 //  boundary still works smoothly.
@@ -675,8 +731,8 @@ function drawLines(active) {
 document.addEventListener('mousemove', e => {
   if (!wbDrag) return;
   const { id, el, sx, sy, ox, oy } = wbDrag;
-  const nx = Math.max(0,  ox + e.clientX - sx);
-  const ny = Math.max(58, oy + e.clientY - sy); // 58px clears the header bar
+  const nx = Math.max(0, ox + (e.clientX - sx) / currentScale);
+  const ny = Math.max(0, oy + (e.clientY - sy) / currentScale);
 
   el.style.left = nx + 'px';
   el.style.top  = ny + 'px';
@@ -708,8 +764,8 @@ document.addEventListener('touchmove', e => {
   e.preventDefault(); // prevent page scroll while dragging a card
   const t = e.touches[0];
   const { id, el, sx, sy, ox, oy } = wbDrag;
-  const nx = Math.max(0,  ox + t.clientX - sx);
-  const ny = Math.max(0,  oy + t.clientY - sy);
+  const nx = Math.max(0, ox + (t.clientX - sx) / currentScale);
+  const ny = Math.max(0, oy + (t.clientY - sy) / currentScale);
   el.style.left = nx + 'px';
   el.style.top  = ny + 'px';
   db.pos[id] = { x: nx, y: ny };
@@ -740,9 +796,8 @@ function renderAll() {
   renderWB();
 }
 
-// Redraw lines on resize or scroll (positions shift relative to viewport)
-window.addEventListener('resize', () => drawLines(db.jobs.filter(j => j.active)));
-$('wb').addEventListener('scroll',  () => drawLines(db.jobs.filter(j => j.active)));
+// Re-zoom and redraw whenever the window is resized
+window.addEventListener('resize', () => zoomToFit());
 
 // Load from server first, then render
 load().then(() => renderAll());
