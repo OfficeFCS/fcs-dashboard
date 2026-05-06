@@ -801,3 +801,10 @@ window.addEventListener('resize', () => zoomToFit());
 
 // Load from server first, then render
 load().then(() => renderAll());
+
+// Re-fetch data from the server every 10 minutes so the board stays current
+// without anyone needing to manually refresh the page
+setInterval(async () => {
+  await load();
+  renderAll();
+}, 10 * 60 * 1000);
