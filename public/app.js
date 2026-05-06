@@ -12,6 +12,8 @@
 // =====================================================
 let db = { jobs: [], employees: [], pos: {} };
 
+let authToken = localStorage.getItem('fcs-token') || '';
+
 let ejId        = null;  // id of the job currently open in the edit panel
 let eeId        = null;  // id of the employee currently open in the edit panel
 let dragEmp     = null;  // id of the employee being dragged from the sidebar (desktop)
@@ -32,7 +34,10 @@ const empBy  = id => db.employees.find(e => e.id === id);
 const save = () => {
   fetch('/api/state', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + authToken,
+    },
     body: JSON.stringify(db),
   }).catch(err => console.error('Save failed:', err));
 };
@@ -47,9 +52,17 @@ const esc = s =>
 // =====================================================
 async function load() {
   try {
-    const res  = await fetch('/api/state');
+    const res  = await fetch('/api/state', {
+      headers: { 'Authorization': 'Bearer ' + authToken },
+    });
+    if (res.status === 401) { showLogin(); return; }
     const data = await res.json();
-    if (data) { db = data; return; }
+    if (data) {
+      db = data;
+      $('login-screen').classList.add('hidden');
+      return;
+    }
+    $('login-screen').classList.add('hidden');
   } catch (e) {
     console.error('Could not reach server, using empty state:', e);
   }
@@ -828,7 +841,41 @@ function renderAll() {
 // Re-zoom and redraw whenever the window is resized
 window.addEventListener('resize', () => zoomToFit());
 
+// =====================================================
+//  LOGIN
+// =====================================================
+function showLogin() {
+  $('login-screen').classList.remove('hidden');
+  $('login-pw').value = '';
+  $('login-err').textContent = '';
+  setTimeout(() => $('login-pw').focus(), 100);
+}
+
+async function doLogin() {
+  const pw  = $('login-pw').value;
+  const err = $('login-err');
+  if (!pw) { err.textContent = 'Please enter the password.'; return; }
+
+  try {
+    const res  = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw }),
+    });
+    const data = await res.json();
+    if (!res.ok) { err.textContent = 'Incorrect password. Try again.'; return; }
+    authToken = data.token;
+    localStorage.setItem('fcs-token', authToken);
+    $('login-screen').classList.add('hidden');
+    await load();
+    renderAll();
+  } catch (e) {
+    err.textContent = 'Could not connect. Try again.';
+  }
+}
+
 // Load from server first, then render
+// If token is missing or invalid, load() will show the login screen instead
 load().then(() => renderAll());
 
 // Re-fetch data from the server every 10 minutes so the board stays current

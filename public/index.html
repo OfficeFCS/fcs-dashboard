@@ -216,6 +216,22 @@
   </div><!-- /ep-emp -->
 
 
+  <!-- ================================================
+       LOGIN SCREEN
+       Shown on first visit or when session expires.
+       ================================================ -->
+  <div id="login-screen">
+    <div id="login-box">
+      <img src="FCS-Logo-remove.png" id="login-logo" alt="FCS Logo">
+      <h1 id="login-title">Final Cleaning Solutions Inc.</h1>
+      <p id="login-sub">Employee Dashboard</p>
+      <input class="fi" id="login-pw" type="password" placeholder="Enter password"
+        onkeydown="if(event.key==='Enter') doLogin()">
+      <button id="login-btn" onclick="doLogin()">Sign In</button>
+      <div id="login-err"></div>
+    </div>
+  </div>
+
   <script src="app.js"></script>
 </body>
 </html>

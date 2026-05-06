@@ -16,6 +16,7 @@
 const express = require('express');
 const { Pool } = require('pg');
 const path    = require('path');
+const crypto  = require('crypto');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -25,6 +26,27 @@ app.use(express.json({ limit: '1mb' }));
 
 // Serve the frontend from the public/ folder
 app.use(express.static(path.join(__dirname, 'public')));
+
+// =====================================================
+//  AUTH
+//  Password is stored in the DASHBOARD_PASSWORD env var.
+//  The token sent to the client is an HMAC of the password
+//  so it changes automatically if the password changes.
+// =====================================================
+
+function getToken() {
+  const pw = process.env.DASHBOARD_PASSWORD || '';
+  return crypto.createHmac('sha256', 'fcs-dashboard').update(pw).digest('hex');
+}
+
+function requireAuth(req, res, next) {
+  // If no password is set, allow all requests (useful for local dev)
+  if (!process.env.DASHBOARD_PASSWORD) return next();
+  const auth  = req.headers['authorization'] || '';
+  const token = auth.replace('Bearer ', '').trim();
+  if (token !== getToken()) return res.status(401).json({ error: 'Unauthorized' });
+  next();
+}
 
 // =====================================================
 //  DATABASE
@@ -52,8 +74,17 @@ async function initDb() {
 //  API ROUTES
 // =====================================================
 
+// POST /api/login — check password and return a token
+app.post('/api/login', (req, res) => {
+  if (!process.env.DASHBOARD_PASSWORD) return res.json({ token: '' });
+  if (req.body.password !== process.env.DASHBOARD_PASSWORD) {
+    return res.status(401).json({ error: 'Incorrect password' });
+  }
+  res.json({ token: getToken() });
+});
+
 // GET /api/state — return the saved dashboard state
-app.get('/api/state', async (req, res) => {
+app.get('/api/state', requireAuth, async (req, res) => {
   try {
     const result = await pool.query("SELECT value FROM state WHERE key = 'db'");
     if (result.rows.length === 0) {
@@ -69,7 +100,7 @@ app.get('/api/state', async (req, res) => {
 });
 
 // POST /api/state — save the full dashboard state
-app.post('/api/state', async (req, res) => {
+app.post('/api/state', requireAuth, async (req, res) => {
   try {
     const value = JSON.stringify(req.body);
     // Upsert: insert or update the single state row
