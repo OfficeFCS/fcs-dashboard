@@ -215,19 +215,19 @@ function lvClass(e) {
   return 'lv-app';
 }
 
-// Format a date string (YYYY-MM-DD) as "May 6"
+// Format a date string (YYYY-MM-DD) as "Monday, May 6"
 function fmtDate(d) {
   if (!d) return '';
   const [y, m, day] = d.split('-');
-  return new Date(+y, +m - 1, +day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return new Date(+y, +m - 1, +day).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
 }
 
-// Format a time string (HH:MM) as "8:00 AM"
+// Format a time string (HH:MM) as "8:00AM"
 function fmtTime(t) {
   if (!t) return '';
   const [h, min] = t.split(':');
   const dt = new Date(); dt.setHours(+h, +min);
-  return dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  return dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).replace(' ', '');
 }
 
 // Sort weight: Foreman < Journeyman < Apprentice 1-6
