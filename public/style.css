@@ -218,6 +218,7 @@ body {
   align-items: center;
   gap: 12px;
 }
+#wbhdr-img  { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; }
 #wbhdr-text { flex: 1; }
 #wbhdr h2 { font-size: 16px; font-weight: 700; color: #1e293b; }
 #wbhdr p  { font-size: 11px; color: #94a3b8; margin-top: 2px; }
