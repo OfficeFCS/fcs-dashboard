@@ -836,6 +836,11 @@ function renderAll() {
 // Re-zoom and redraw whenever the window is resized
 window.addEventListener('resize', () => zoomToFit());
 
+function signOut() {
+  localStorage.removeItem('fcs-token');
+  window.location.replace('/login.html');
+}
+
 // Load from server first, then render
 // If token is missing or invalid, load() redirects to login.html
 load().then(() => renderAll());

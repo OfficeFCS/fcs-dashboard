@@ -220,6 +220,19 @@ body {
 }
 #wbhdr-img  { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; }
 #wbhdr-text { flex: 1; }
+#signout-btn {
+  padding: 7px 14px;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background .15s, color .15s;
+}
+#signout-btn:hover { background: #fee2e2; color: #dc2626; }
 #wbhdr h2 { font-size: 16px; font-weight: 700; color: #1e293b; }
 #wbhdr p  { font-size: 11px; color: #94a3b8; margin-top: 2px; }
 
