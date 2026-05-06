@@ -841,6 +841,11 @@ function signOut() {
   window.location.replace('/login.html');
 }
 
+// Register service worker for PWA support
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js');
+}
+
 // Load from server first, then render
 // If token is missing or invalid, load() redirects to login.html
 load().then(() => renderAll());

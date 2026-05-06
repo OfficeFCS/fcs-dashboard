@@ -1,0 +1,23 @@
+{
+  "name": "FCS Employee Dashboard",
+  "short_name": "FCS Dashboard",
+  "description": "Employee and job management for Final Cleaning Solutions Inc.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#16213e",
+  "theme_color": "#16213e",
+  "icons": [
+    {
+      "src": "FCS-Logo-remove.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "FCS-Logo-remove.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
