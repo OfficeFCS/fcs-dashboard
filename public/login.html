@@ -13,8 +13,11 @@
       background: #16213e;
       min-height: 100vh;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      gap: 16px;
+      padding: 20px;
     }
 
     #login-box {
@@ -32,11 +35,16 @@
 
     #login-logo  { width: 64px; height: 64px; object-fit: contain; margin-bottom: 4px; }
     #login-title { font-size: 16px; font-weight: 700; color: #f1f5f9; text-align: center; }
-    #login-sub   { font-size: 12px; color: #475569; margin-bottom: 8px; }
+    #login-sub   { font-size: 12px; color: #f1f5f9; margin-bottom: 8px; }
 
-    input {
+    /* Password field wrapper — positions the show/hide toggle inside the input */
+    .pw-wrap {
+      position: relative;
       width: 100%;
-      padding: 10px 12px;
+    }
+    .pw-wrap input {
+      width: 100%;
+      padding: 10px 40px 10px 12px;
       background: rgba(255,255,255,.07);
       border: 1.5px solid rgba(255,255,255,.1);
       border-radius: 8px;
@@ -45,8 +53,26 @@
       outline: none;
       transition: border-color .15s;
     }
-    input::placeholder { color: #475569; }
-    input:focus { border-color: rgba(59,130,246,.5); }
+    .pw-wrap input::placeholder { color: #475569; }
+    .pw-wrap input:focus { border-color: rgba(59,130,246,.5); }
+
+    /* Show/hide toggle button inside the input */
+    #toggle-pw {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      width: auto;
+      color: #64748b;
+      font-size: 16px;
+      line-height: 1;
+      transition: color .15s;
+    }
+    #toggle-pw:hover { background: none; color: #94a3b8; }
 
     button {
       width: 100%;
@@ -69,6 +95,21 @@
       text-align: center;
     }
 
+    /* Demo disclaimer shown below the login box */
+    #demo-note {
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+      font-size: 11px;
+      color: #475569;
+      line-height: 1.6;
+      padding: 12px 16px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 10px;
+    }
+    #demo-note strong { color: #94a3b8; }
+
     @media (max-width: 420px) {
       #login-box { padding: 32px 20px; }
     }
@@ -79,16 +120,31 @@
     <img src="FCS-Logo-remove.png" id="login-logo" alt="FCS Logo">
     <div id="login-title">Final Cleaning Solutions Inc.</div>
     <div id="login-sub">Employee Dashboard</div>
-    <input type="password" id="login-pw" placeholder="Enter password"
-      onkeydown="if(event.key==='Enter') doLogin()">
+
+    <div class="pw-wrap">
+      <input type="password" id="login-pw" placeholder="Enter password"
+        onkeydown="if(event.key==='Enter') doLogin()">
+      <button id="toggle-pw" onclick="togglePw()" type="button" title="Show/hide password">👁</button>
+    </div>
+
     <button onclick="doLogin()">Sign In</button>
     <div id="login-err"></div>
+  </div>
+
+  <div id="demo-note">
+    ⚠️ <strong>Demo Version</strong> — This dashboard is for demonstration purposes only.<br>
+    Password: <strong>FCSADMIN2026</strong>
   </div>
 
   <script>
     // If already logged in, go straight to the dashboard
     if (localStorage.getItem('fcs-token')) {
       window.location.replace('/');
+    }
+
+    function togglePw() {
+      const input = document.getElementById('login-pw');
+      input.type = input.type === 'password' ? 'text' : 'password';
     }
 
     async function doLogin() {
