@@ -617,7 +617,7 @@ function renderWB() {
     // Mousedown starts a whiteboard drag to reposition the job card (desktop)
     jel.addEventListener('mousedown', e => {
       if (e.button !== 0 || selectedEmp) return; // don't drag while in assign mode
-      wbDrag = { id: job.id, el: jel, sx: e.clientX, sy: e.clientY, ox: x, oy: y };
+      wbDrag = { id: job.id, el: jel, ox: x, oy: y, lastX: e.clientX, lastY: e.clientY };
       jel.classList.add('gjd');
       e.preventDefault();
     });
@@ -626,7 +626,7 @@ function renderWB() {
     jel.addEventListener('touchstart', e => {
       if (selectedEmp) return; // tap handled by click event above
       const t = e.touches[0];
-      wbDrag = { id: job.id, el: jel, sx: t.clientX, sy: t.clientY, ox: x, oy: y };
+      wbDrag = { id: job.id, el: jel, ox: x, oy: y, lastX: t.clientX, lastY: t.clientY };
       jel.classList.add('gjd');
     }, { passive: true });
 
@@ -725,7 +725,10 @@ function zoomToFit() {
     currentScale = 1;
     inner.style.transformOrigin = '0 0';
     inner.style.transform = `translate(0px, ${hdrH}px) scale(1)`;
-    requestAnimationFrame(() => drawLines(active));
+    if (!zoomToFit._pending) {
+      zoomToFit._pending = true;
+      requestAnimationFrame(() => { drawLines(active); zoomToFit._pending = false; });
+    }
     return;
   }
 
@@ -770,7 +773,14 @@ function zoomToFit() {
   inner.style.transformOrigin = '0 0';
   inner.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;
 
-  requestAnimationFrame(() => drawLines(active));
+  // Guard against queuing multiple rAF callbacks during fast drag events
+  if (!zoomToFit._pending) {
+    zoomToFit._pending = true;
+    requestAnimationFrame(() => {
+      drawLines(db.jobs.filter(j => j.active));
+      zoomToFit._pending = false;
+    });
+  }
 }
 
 // =====================================================
@@ -780,9 +790,15 @@ function zoomToFit() {
 // =====================================================
 document.addEventListener('mousemove', e => {
   if (!wbDrag) return;
-  const { id, el, sx, sy, ox, oy } = wbDrag;
-  const nx = Math.max(0, ox + (e.clientX - sx) / currentScale);
-  const ny = Math.max(0, oy + (e.clientY - sy) / currentScale);
+  const { id, el } = wbDrag;
+
+  // Incremental delta — uses current scale so zoom changes mid-drag don't cause jumps
+  const nx = Math.max(0, wbDrag.ox + (e.clientX - wbDrag.lastX) / currentScale);
+  const ny = Math.max(0, wbDrag.oy + (e.clientY - wbDrag.lastY) / currentScale);
+  wbDrag.lastX = e.clientX;
+  wbDrag.lastY = e.clientY;
+  wbDrag.ox = nx;
+  wbDrag.oy = ny;
 
   el.style.left = nx + 'px';
   el.style.top  = ny + 'px';
@@ -797,7 +813,7 @@ document.addEventListener('mousemove', e => {
     }
   });
 
-  drawLines(db.jobs.filter(j => j.active));
+  zoomToFit(); // re-zoom in real-time as card moves
 });
 
 document.addEventListener('mouseup', () => {
@@ -814,9 +830,16 @@ document.addEventListener('touchmove', e => {
   if (!wbDrag) return;
   e.preventDefault(); // prevent page scroll while dragging a card
   const t = e.touches[0];
-  const { id, el, sx, sy, ox, oy } = wbDrag;
-  const nx = Math.max(0, ox + (t.clientX - sx) / currentScale);
-  const ny = Math.max(0, oy + (t.clientY - sy) / currentScale);
+  const { id, el } = wbDrag;
+
+  // Incremental delta — uses current scale so zoom changes mid-drag don't cause jumps
+  const nx = Math.max(0, wbDrag.ox + (t.clientX - wbDrag.lastX) / currentScale);
+  const ny = Math.max(0, wbDrag.oy + (t.clientY - wbDrag.lastY) / currentScale);
+  wbDrag.lastX = t.clientX;
+  wbDrag.lastY = t.clientY;
+  wbDrag.ox = nx;
+  wbDrag.oy = ny;
+
   el.style.left = nx + 'px';
   el.style.top  = ny + 'px';
   db.pos[id] = { x: nx, y: ny };
@@ -827,7 +850,7 @@ document.addEventListener('touchmove', e => {
       eel.style.top  = (ny + i * 62) + 'px';
     }
   });
-  drawLines(db.jobs.filter(j => j.active));
+  zoomToFit(); // re-zoom in real-time as card moves
 }, { passive: false });
 
 document.addEventListener('touchend', () => {
