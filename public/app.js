@@ -729,20 +729,33 @@ function zoomToFit() {
     return;
   }
 
-  // Bounding box of all active job + employee cards
+  // Bounding box using actual rendered card dimensions
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   active.forEach(job => {
     const pos = db.pos[job.id];
     if (!pos) return;
     const { x, y } = pos;
     const emps = db.employees.filter(e => e.jid === job.id);
+
+    const jel = $('wbj-' + job.id);
+    const jW  = jel ? jel.offsetWidth  : 210;
+    const jH  = jel ? jel.offsetHeight : 90;
+
     minX = Math.min(minX, x);
     minY = Math.min(minY, y);
-    maxX = Math.max(maxX, x + (emps.length ? 190 + 140 : 210));
-    maxY = Math.max(maxY, y + Math.max(60, emps.length * 62));
+    maxX = Math.max(maxX, x + jW);
+    maxY = Math.max(maxY, y + jH);
+
+    emps.forEach((emp, i) => {
+      const eel = $('wbe-' + emp.id);
+      const eW  = eel ? eel.offsetWidth  : 140;
+      const eH  = eel ? eel.offsetHeight : 50;
+      maxX = Math.max(maxX, x + 190 + eW);
+      maxY = Math.max(maxY, y + i * 62 + eH);
+    });
   });
 
-  const pad = 32;
+  const pad = 48;
   const contentW = maxX - minX + pad * 2;
   const contentH = maxY - minY + pad * 2;
 
