@@ -803,8 +803,9 @@ document.addEventListener('mousemove', e => {
 document.addEventListener('mouseup', () => {
   if (wbDrag) {
     wbDrag.el.classList.remove('gjd');
-    save(); // persist final position
+    save();
     wbDrag = null;
+    zoomToFit(); // re-center view after card is moved
   }
 });
 
@@ -834,6 +835,7 @@ document.addEventListener('touchend', () => {
     wbDrag.el.classList.remove('gjd');
     save();
     wbDrag = null;
+    zoomToFit(); // re-center view after card is moved
   }
 });
 

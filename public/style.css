@@ -220,6 +220,20 @@ body {
 }
 #wbhdr-img  { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; }
 #wbhdr-text { flex: 1; }
+#fit-btn {
+  padding: 7px 14px;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background .15s, color .15s;
+}
+#fit-btn:hover { background: #e2e8f0; color: #1e293b; }
+
 #signout-btn {
   padding: 7px 14px;
   background: #f1f5f9;
