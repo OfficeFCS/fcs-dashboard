@@ -1,11 +1,23 @@
 <!DOCTYPE html>
+<!--
+  FCS Dashboard — Login Page
+  Standalone login screen shown to unauthenticated users.
+  On successful login a token is saved to localStorage and
+  the user is redirected to the main dashboard (index.html).
+  The token is an HMAC derived from the password on the server,
+  so changing the password in Render instantly invalidates all sessions.
+-->
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Final Cleaning Solutions Inc. — Login</title>
+
+  <!-- Favicon and PWA icons -->
   <link rel="icon" type="image/png" href="FCS-Logo-remove.png">
   <link rel="apple-touch-icon" href="FCS-Logo-remove.png">
+
+  <!-- PWA manifest and iOS meta tags -->
   <link rel="manifest" href="/manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -156,11 +168,12 @@
   </div>
 
   <script>
-    // If already logged in, go straight to the dashboard
+    // Skip login if a token is already stored — go straight to the dashboard
     if (localStorage.getItem('fcs-token')) {
       window.location.replace('/');
     }
 
+    // Toggle the password field between hidden (••••) and visible text
     function togglePw() {
       const input = document.getElementById('login-pw');
       const showing = input.type === 'text';
@@ -169,6 +182,7 @@
       document.getElementById('icon-eye-off').style.display = showing ? 'none' : '';
     }
 
+    // Submit the password to the server and redirect on success
     async function doLogin() {
       const pw  = document.getElementById('login-pw').value;
       const err = document.getElementById('login-err');
@@ -182,6 +196,8 @@
         });
         const data = await res.json();
         if (!res.ok) { err.textContent = 'Incorrect password. Try again.'; return; }
+
+        // Store the token so the user stays logged in on this device
         localStorage.setItem('fcs-token', data.token);
         window.location.replace('/');
       } catch (e) {
