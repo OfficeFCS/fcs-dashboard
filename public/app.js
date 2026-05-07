@@ -19,6 +19,8 @@ let eeId        = null;  // id of the employee currently open in the edit panel
 let dragEmp     = null;  // id of the employee being dragged from the sidebar (desktop)
 let wbDrag      = null;  // active whiteboard job-drag state { id, el, sx, sy, ox, oy }
 let currentScale = 1;   // current whiteboard zoom level (maintained by zoomToFit)
+let currentTx    = 0;   // current canvas translate X (maintained by zoomToFit)
+let currentTy    = 0;   // current canvas translate Y (maintained by zoomToFit)
 let selectedEmp  = null;  // id of employee selected for tap-to-assign (mobile)
 
 // =====================================================
@@ -617,7 +619,10 @@ function renderWB() {
     // Mousedown starts a whiteboard drag to reposition the job card (desktop)
     jel.addEventListener('mousedown', e => {
       if (e.button !== 0 || selectedEmp) return; // don't drag while in assign mode
-      wbDrag = { id: job.id, el: jel, ox: x, oy: y, lastX: e.clientX, lastY: e.clientY };
+      // Store offset from finger to card top-left in canvas coords
+      wbDrag = { id: job.id, el: jel,
+        offX: x - (e.clientX - currentTx) / currentScale,
+        offY: y - (e.clientY - currentTy) / currentScale };
       jel.classList.add('gjd');
       e.preventDefault();
     });
@@ -626,7 +631,10 @@ function renderWB() {
     jel.addEventListener('touchstart', e => {
       if (selectedEmp) return; // tap handled by click event above
       const t = e.touches[0];
-      wbDrag = { id: job.id, el: jel, ox: x, oy: y, lastX: t.clientX, lastY: t.clientY };
+      // Store offset from finger to card top-left in canvas coords
+      wbDrag = { id: job.id, el: jel,
+        offX: x - (t.clientX - currentTx) / currentScale,
+        offY: y - (t.clientY - currentTy) / currentScale };
       jel.classList.add('gjd');
     }, { passive: true });
 
@@ -723,6 +731,7 @@ function zoomToFit() {
 
   if (!active.length) {
     currentScale = 1;
+    currentTx = 0; currentTy = hdrH;
     inner.style.transformOrigin = '0 0';
     inner.style.transform = `translate(0px, ${hdrH}px) scale(1)`;
     if (!zoomToFit._pending) {
@@ -763,12 +772,13 @@ function zoomToFit() {
   const contentH = maxY - minY + pad * 2;
 
   // Never zoom in past 100%
-  const s = Math.min(wbW / contentW, wbH / contentH, 1);
-  currentScale = s;
-
-  // Center the scaled content in the area below the header
+  const s  = Math.min(wbW / contentW, wbH / contentH, 1);
   const tx = (wbW - contentW * s) / 2 - (minX - pad) * s;
   const ty = hdrH + (wbH - contentH * s) / 2 - (minY - pad) * s;
+
+  currentScale = s;
+  currentTx    = tx;
+  currentTy    = ty;
 
   inner.style.transformOrigin = '0 0';
   inner.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;
@@ -790,15 +800,11 @@ function zoomToFit() {
 // =====================================================
 document.addEventListener('mousemove', e => {
   if (!wbDrag) return;
-  const { id, el } = wbDrag;
+  const { id, el, offX, offY } = wbDrag;
 
-  // Incremental delta — uses current scale so zoom changes mid-drag don't cause jumps
-  const nx = Math.max(0, wbDrag.ox + (e.clientX - wbDrag.lastX) / currentScale);
-  const ny = Math.max(0, wbDrag.oy + (e.clientY - wbDrag.lastY) / currentScale);
-  wbDrag.lastX = e.clientX;
-  wbDrag.lastY = e.clientY;
-  wbDrag.ox = nx;
-  wbDrag.oy = ny;
+  // Convert screen position to canvas coords — card stays exactly under cursor
+  const nx = Math.max(0, (e.clientX - currentTx) / currentScale + offX);
+  const ny = Math.max(0, (e.clientY - currentTy) / currentScale + offY);
 
   el.style.left = nx + 'px';
   el.style.top  = ny + 'px';
@@ -830,15 +836,11 @@ document.addEventListener('touchmove', e => {
   if (!wbDrag) return;
   e.preventDefault(); // prevent page scroll while dragging a card
   const t = e.touches[0];
-  const { id, el } = wbDrag;
+  const { id, el, offX, offY } = wbDrag;
 
-  // Incremental delta — uses current scale so zoom changes mid-drag don't cause jumps
-  const nx = Math.max(0, wbDrag.ox + (t.clientX - wbDrag.lastX) / currentScale);
-  const ny = Math.max(0, wbDrag.oy + (t.clientY - wbDrag.lastY) / currentScale);
-  wbDrag.lastX = t.clientX;
-  wbDrag.lastY = t.clientY;
-  wbDrag.ox = nx;
-  wbDrag.oy = ny;
+  // Convert screen position to canvas coords — card stays exactly under finger
+  const nx = Math.max(0, (t.clientX - currentTx) / currentScale + offX);
+  const ny = Math.max(0, (t.clientY - currentTy) / currentScale + offY);
 
   el.style.left = nx + 'px';
   el.style.top  = ny + 'px';
