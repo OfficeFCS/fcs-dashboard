@@ -625,17 +625,17 @@ function renderWB() {
       e.preventDefault();
     });
 
-    // Touchstart starts a whiteboard drag to reposition the job card (mobile)
-    // passive:false so we can call preventDefault() and stop the browser claiming
-    // the touch as a scroll gesture before our touchmove handler can cancel it.
+    // Touchstart starts a whiteboard drag to reposition the job card (mobile).
+    // touch-action:none on .wj (CSS) already tells the browser not to scroll,
+    // so we don't need e.preventDefault() here — and calling it with passive:false
+    // can suppress touchmove on iOS Safari when there is only one card on screen.
     jel.addEventListener('touchstart', e => {
       if (selectedEmp) return; // tap handled by click event above
-      e.preventDefault(); // prevent browser scroll so the drag works
       const t = e.touches[0];
       const pos = db.pos[job.id]; // read current position, not stale closure value
       wbDrag = { id: job.id, el: jel, sx: t.clientX, sy: t.clientY, ox: pos.x, oy: pos.y };
       jel.classList.add('gjd');
-    }, { passive: false });
+    }, { passive: true });
 
     // Dragover / drop: accept employee cards dragged from the sidebar
     jel.addEventListener('dragover', e => {

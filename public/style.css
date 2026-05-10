@@ -200,6 +200,7 @@ body {
   position: relative;
   background: #fff;
   overflow: hidden; /* zoom-to-fit scales content to visible area — no scroll needed */
+  touch-action: none; /* prevent browser pan/zoom on the whiteboard — JS handles all touch */
   /* Subtle grid to give the whiteboard feel */
   background-image:
     linear-gradient(rgba(148, 163, 184, .13) 1px, transparent 1px),
