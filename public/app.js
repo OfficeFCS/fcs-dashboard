@@ -620,9 +620,7 @@ function renderWB() {
     jel.addEventListener('mousedown', e => {
       if (e.button !== 0 || selectedEmp) return; // don't drag while in assign mode
       // Store offset from finger to card top-left in canvas coords
-      wbDrag = { id: job.id, el: jel,
-        offX: x - (e.clientX - currentTx) / currentScale,
-        offY: y - (e.clientY - currentTy) / currentScale };
+      wbDrag = { id: job.id, el: jel, sx: e.clientX, sy: e.clientY, ox: x, oy: y };
       jel.classList.add('gjd');
       e.preventDefault();
     });
@@ -632,9 +630,7 @@ function renderWB() {
       if (selectedEmp) return; // tap handled by click event above
       const t = e.touches[0];
       // Store offset from finger to card top-left in canvas coords
-      wbDrag = { id: job.id, el: jel,
-        offX: x - (t.clientX - currentTx) / currentScale,
-        offY: y - (t.clientY - currentTy) / currentScale };
+      wbDrag = { id: job.id, el: jel, sx: t.clientX, sy: t.clientY, ox: x, oy: y };
       jel.classList.add('gjd');
     }, { passive: true });
 
@@ -800,17 +796,14 @@ function zoomToFit() {
 // =====================================================
 document.addEventListener('mousemove', e => {
   if (!wbDrag) return;
-  const { id, el, offX, offY } = wbDrag;
-
-  // Convert screen position to canvas coords — card stays exactly under cursor
-  const nx = Math.max(0, (e.clientX - currentTx) / currentScale + offX);
-  const ny = Math.max(0, (e.clientY - currentTy) / currentScale + offY);
+  const { id, el, sx, sy, ox, oy } = wbDrag;
+  const nx = Math.max(0, ox + (e.clientX - sx) / currentScale);
+  const ny = Math.max(0, oy + (e.clientY - sy) / currentScale);
 
   el.style.left = nx + 'px';
   el.style.top  = ny + 'px';
   db.pos[id] = { x: nx, y: ny };
 
-  // Move the attached employee cards in sync
   db.employees.filter(x => x.jid === id).forEach((emp, i) => {
     const eel = $('wbe-' + emp.id);
     if (eel) {
@@ -819,7 +812,7 @@ document.addEventListener('mousemove', e => {
     }
   });
 
-  zoomToFit(); // re-zoom in real-time as card moves
+  drawLines(db.jobs.filter(j => j.active));
 });
 
 document.addEventListener('mouseup', () => {
@@ -836,11 +829,9 @@ document.addEventListener('touchmove', e => {
   if (!wbDrag) return;
   e.preventDefault(); // prevent page scroll while dragging a card
   const t = e.touches[0];
-  const { id, el, offX, offY } = wbDrag;
-
-  // Convert screen position to canvas coords — card stays exactly under finger
-  const nx = Math.max(0, (t.clientX - currentTx) / currentScale + offX);
-  const ny = Math.max(0, (t.clientY - currentTy) / currentScale + offY);
+  const { id, el, sx, sy, ox, oy } = wbDrag;
+  const nx = Math.max(0, ox + (t.clientX - sx) / currentScale);
+  const ny = Math.max(0, oy + (t.clientY - sy) / currentScale);
 
   el.style.left = nx + 'px';
   el.style.top  = ny + 'px';
@@ -852,7 +843,7 @@ document.addEventListener('touchmove', e => {
       eel.style.top  = (ny + i * 62) + 'px';
     }
   });
-  zoomToFit(); // re-zoom in real-time as card moves
+  drawLines(db.jobs.filter(j => j.active));
 }, { passive: false });
 
 document.addEventListener('touchend', () => {
