@@ -286,6 +286,7 @@ body {
   z-index: 2;
   box-shadow: 0 4px 18px rgba(0, 0, 0, .1);
   user-select: none;
+  touch-action: none; /* tell the browser not to handle touch — our JS drag handles it */
   transition: box-shadow .15s;
 }
 .wj:hover { box-shadow: 0 8px 28px rgba(0, 0, 0, .14); }

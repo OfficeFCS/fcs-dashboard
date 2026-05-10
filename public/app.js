@@ -823,7 +823,7 @@ document.addEventListener('mouseup', () => {
     wbDrag.el.classList.remove('gjd');
     save();
     wbDrag = null;
-    zoomToFit(); // re-center view after card is moved
+    drawLines(db.jobs.filter(j => j.active)); // redraw lines; don't re-zoom (would shift other cards)
   }
 });
 
@@ -854,7 +854,16 @@ document.addEventListener('touchend', () => {
     wbDrag.el.classList.remove('gjd');
     save();
     wbDrag = null;
-    zoomToFit(); // re-center view after card is moved
+    drawLines(db.jobs.filter(j => j.active)); // redraw lines; don't re-zoom (would shift other cards)
+  }
+});
+
+// touchcancel fires when the OS interrupts a touch (e.g. a call comes in).
+// Without this, wbDrag would stay set and the next touch would behave strangely.
+document.addEventListener('touchcancel', () => {
+  if (wbDrag) {
+    wbDrag.el.classList.remove('gjd');
+    wbDrag = null;
   }
 });
 
