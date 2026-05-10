@@ -619,20 +619,23 @@ function renderWB() {
     // Mousedown starts a whiteboard drag to reposition the job card (desktop)
     jel.addEventListener('mousedown', e => {
       if (e.button !== 0 || selectedEmp) return; // don't drag while in assign mode
-      // Store offset from finger to card top-left in canvas coords
-      wbDrag = { id: job.id, el: jel, sx: e.clientX, sy: e.clientY, ox: x, oy: y };
+      const pos = db.pos[job.id]; // read current position, not stale closure value
+      wbDrag = { id: job.id, el: jel, sx: e.clientX, sy: e.clientY, ox: pos.x, oy: pos.y };
       jel.classList.add('gjd');
       e.preventDefault();
     });
 
     // Touchstart starts a whiteboard drag to reposition the job card (mobile)
+    // passive:false so we can call preventDefault() and stop the browser claiming
+    // the touch as a scroll gesture before our touchmove handler can cancel it.
     jel.addEventListener('touchstart', e => {
       if (selectedEmp) return; // tap handled by click event above
+      e.preventDefault(); // prevent browser scroll so the drag works
       const t = e.touches[0];
-      // Store offset from finger to card top-left in canvas coords
-      wbDrag = { id: job.id, el: jel, sx: t.clientX, sy: t.clientY, ox: x, oy: y };
+      const pos = db.pos[job.id]; // read current position, not stale closure value
+      wbDrag = { id: job.id, el: jel, sx: t.clientX, sy: t.clientY, ox: pos.x, oy: pos.y };
       jel.classList.add('gjd');
-    }, { passive: true });
+    }, { passive: false });
 
     // Dragover / drop: accept employee cards dragged from the sidebar
     jel.addEventListener('dragover', e => {
